@@ -58,7 +58,7 @@ public class AdminController {
 }
 ```
 
-`/admin`なんてものがある。認可制御ミスかな？と思ってアクセスしてみたが
+`/admin``/admin/users`なんてものがある。ひょっとして認可制御ミスかな？と思ってアクセスしてみたが
 
 <img width="1024" height="256" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/403.png" />
 
