@@ -1,4 +1,4 @@
-# springing (2026/8/29-31)
+# Springing (2026/8/29-31)
 
 AlpacaHack初のWriteupです。温かい目で見てください。
 
