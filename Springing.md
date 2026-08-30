@@ -12,13 +12,13 @@ AlpacaHack初のWriteupです。温かい目で見てください。
 
 <img width="646" height="274" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/form.png" />
 
-registerとあるため、単純なSQLiなどでadminにログインする流れでは無さそう。
+Registerとあるため、単純なSQLiなどでadminにログインする流れでは無さそう。
 
-適当なユーザー名とパスワードを入力して登録し、ログインできた。UUIDらしきものが設定されている。
+Registerをクリックし、適当なユーザー名とパスワードを入力して登録してみる。その情報を用いたらすんなりログインできた。UUIDらしきものが設定されている。
 
 <img width="630" height="361" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/uuid.png" />
 
-GUESTとあるから、これをADMINにするために何らかのアクションをする必要があるのだろう。
+GUESTと書かれている。じゃあADMINもあるんだろう。ADMINになったらフラグがマイページに出力されるのかな？
 
 ここで少しソースコードを見てみる。`AdminController.java`に以下のようなコードを見つけた。
 
@@ -105,7 +105,7 @@ public class SecurityConfig {
 
 対象外となったリクエストは後続の`.anyRequest().authenticated()`によって処理される。ここではADMIN権限ではなく、ログイン済みであることしか要求されないため、GUESTユーザーでも`POST /admin/users/{UUID}`へアクセスできてしまう。
 
-よって、自分のUUIDでアクセスし、ロールを変えてしまおう。
+よって、自分のUUIDでアクセスし、ロールを変えてしまえばいい。
 
 `AdminController.java`より、
 
@@ -113,7 +113,7 @@ public class SecurityConfig {
 - `userid` はURLのパスパラメータとして指定する
 - `role` はリクエストパラメータとして指定する
 
-ことが分かるため、curlを用いてリクエストを送信する。
+ことが分かるため、それらを満たすリクエストをcurlで送信する。
 
 ## 解法
 
@@ -126,9 +126,9 @@ curl -i -X POST \
 
 こちらを実行することで、自身の権限をGUESTからADMINに変更できる。ページに戻ると、正しく権限がADMINに変更されていることが分かる。
 
-しかし、現在のセッションに保持されているSpring Securityの`SecurityContext`には、ログイン時に生成された`ROLE_GUEST`の認証情報が残っている。そのため、このままでは`/admin`へアクセスしても403となる。
+しかし、現在のセッションにはログイン時に生成された`ROLE_GUEST`の認証情報が残っている。そのため、このままでは`/admin`へアクセスしても403となる。
 
-一度ログアウトして再ログインすることで認証情報を再生成し、新しい`ROLE_ADMIN`を反映させる必要がある。
+よって、一度ログアウトして再ログインすることで認証情報を再生成し、新しい`ROLE_ADMIN`を反映させる必要がある。
 
 再ログイン後、`/admin`にアクセスすると、フラグが表示された。
 
