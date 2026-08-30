@@ -58,7 +58,7 @@ public class AdminController {
 }
 ```
 
-`/admin``/admin/users`なんてものがある。ひょっとして認可制御ミスかな？と思ってアクセスしてみたが
+`/admin`、`/admin/users`なんてものがある。ひょっとして認可制御ミスかな？と思ってアクセスしてみたが
 
 <img width="1024" height="256" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/403.png" />
 
@@ -103,26 +103,34 @@ public class SecurityConfig {
 
 しかし、`*`は`/`をまたがない一層分のみマッチするため、`/admin/users/{UUID}`は`/admin/*`にマッチしない。
 
+対象外となったリクエストは後続の`.anyRequest().authenticated()`によって処理される。ここではADMIN権限ではなく、ログイン済みであることしか要求されないため、GUESTユーザーでも`POST /admin/users/{UUID}`へアクセスできてしまう。
+
 よって、自分のUUIDでアクセスし、ロールを変えてしまおう。
 
-`Application.java`より
+`AdminController.java`より、
 
-- POST通信のみ通信可能
-- 引数として`role`と`userid`が必要
+- `/admin/users/{userid}` はPOSTで処理される
+- `userid` はURLのパスパラメータとして指定する
+- `role` はリクエストパラメータとして指定する
 
-であることが分かるため、curlコマンドを用いてこれらを満たすPoCを作成する。
+ことが分かるため、curlを用いてリクエストを送信する。
 
 ## 解法
 
 ```shell
-curl -i -X POST   -b 'JSESSIONID={自分のセッション値}'   -d 'role=ADMIN'   'http://34.170.146.252:37059/admin/users/{自分のユーザー値}'
+curl -i -X POST \
+  -b 'JSESSIONID={自分のセッション値}' \
+  -d 'role=ADMIN' \
+  'http://34.170.146.252:37059/admin/users/{自分のUUID}'
 ```
 
-こちらを実行することで、自身の権限をGUESTからADMINに変更される。
+こちらを実行することで、自身の権限をGUESTからADMINに変更できる。ページに戻ると、正しく権限がADMINに変更されていることが分かる。
 
-自身のページに戻ると、ただしく権限がADMINに変更していることがわかる。しかし、JSESSONIDは現状GUESTのままであり、このまま続けても403で止められてしまうため、一度ログアウトすることでセッションをリセットし、再度ログインする必要がある。
+しかし、現在のセッションに保持されているSpring Securityの`SecurityContext`には、ログイン時に生成された`ROLE_GUEST`の認証情報が残っている。そのため、このままでは`/admin`へアクセスしても403となる。
 
-再ログイン後、`/admin`にアクセス。
+一度ログアウトして再ログインすることで認証情報を再生成し、新しい`ROLE_ADMIN`を反映させる必要がある。
+
+再ログイン後、`/admin`にアクセスすると、フラグが表示された。
 
 <img width="648" height="255" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/flag.png" />
 
