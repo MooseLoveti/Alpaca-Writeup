@@ -10,17 +10,13 @@ AlpacaHack初のWriteupです。温かい目で見てください。
 
 とりあえずリンクを見てみると、ごく普通のログインページがある。
 
-<ここに画像を入れる予定>
+<img width="646" height="274" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/form.png" />
 
-registerともあるため、単純なSQLiなどでadminにログインする流れでは無さそう。
+registerとあるため、単純なSQLiなどでadminにログインする流れでは無さそう。
 
-適当なユーザー名とパスワードを入力してみる。
+適当なユーザー名とパスワードを入力して登録し、ログインできた。UUIDらしきものが設定されている。
 
-<ここに画像を入れる予定>
-
-おお、ログインできた。UUIDらしきものが設定されている。
-
-<ここに画像を入れる予定>
+<img width="630" height="361" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/uuid.png" />
 
 GUESTとあるから、これをADMINにするために何らかのアクションをする必要があるのだろう。
 
@@ -64,9 +60,9 @@ public class AdminController {
 
 `/admin`なんてものがある。認可制御ミスかな？と思ってアクセスしてみたが
 
-<ここに画像を挿入>
+<img width="1024" height="256" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/403.png" />
 
-普通に失敗。`SecurityConfig.java`に認可処理が書かれているとのこと。見てみよう。
+普通に権限が無く失敗。`SecurityConfig.java`に認可処理が書かれているとのこと。見てみよう。
 
 ## 認可不備
 
@@ -128,6 +124,7 @@ curl -i -X POST   -b 'JSESSIONID={自分のセッション値}'   -d 'role=ADMIN
 
 再ログイン後、`/admin`にアクセス。
 
-<ここに画像を挿入>
+<img width="648" height="255" alt="image" src="https://github.com/MooseLoveti/Alpaca-Writeup/blob/main/image/flag.png" />
+
 
 Flag : `Alpaca{p0yoyoyoyoyoyo----n}`
