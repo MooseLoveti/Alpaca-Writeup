@@ -171,9 +171,68 @@ POSTで`input`の値を指定して、それが通れば、その値が正しい
 "Hello, {hoge}".format(username=username)
 ```
 
-そして、今回は
+そして、今回は`custom-hello`が存在した場合、このようになります。
 
+```
+custom = request.form.get(f"custom-{key}")
+if custom:
+    return custom
+```
 
+そのまま外部入力が返却されるようです。よって、外部入力に`{username}`ではない別の適当なフォーマットを仕込めば、意図的に例外を発生させることができます。
 
+```
+curl -X GET \
+  -d "custom-hello=Hello {hoge}" \
+```
+
+さて、ひとまず例外を起こすことに成功しました。次は
+
+```
+except Exception as e:
+    return _("error").format(err=e), 500, {'Content-Type': 'text/plain;charset=utf-8'}
+```
+
+この処理を考えてみます。
+
+`e`の中には何が入っているのでしょうか？
+
+軽く自作でプログラムを作って確かめてみます。
+
+```
+try:
+    "{hoge}".format(username="test")
+except Exception as e:
+    print(dir(e))
+```
+
+`dir`関数は、オブジェクトが持っている属性名やメソッド名の一覧を確認するための組み込み関数です。
+
+出力はこうなりました。
+
+```
+['__cause__', '__class__', '__context__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__setstate__', '__sizeof__', '__str__', '__subclasshook__', '__suppress_context__', '__traceback__', 'args', 'with_traceback']
+```
+
+注目するべきは`__traceback__`です。
+
+`__traceback__`には、例外が発生した時点のPython実行環境が入っています。
+
+つまり、その中に`check`関数の情報が入っている可能性があります。
+
+同じように、使える属性名やメソッド名を辿ってみます。
+
+```
+try:
+    "{hoge}".format(username="test")
+except Exception as e:
+    print(dir(e.__traceback__))
+```
+
+出力はこうなりました。
+
+```
+['tb_frame', 'tb_lasti', 'tb_lineno', 'tb_next']
+```
 
 
